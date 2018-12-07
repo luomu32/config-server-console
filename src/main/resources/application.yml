@@ -1,0 +1,16 @@
+spring:
+  datasource:
+#    platform: mysql
+    url: jdbc:mysql://localhost:3306/config_server_console?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    username: root
+    password: 123456
+  jpa:
+    generate-ddl: false
+    show-sql: true
+  redis:
+    host: 127.0.0.1
+  session:
+    store-type: redis
+  messages:
+    basename: messages/messages
+    encoding: utf-8
