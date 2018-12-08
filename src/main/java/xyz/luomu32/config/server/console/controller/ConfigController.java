@@ -1,9 +1,13 @@
 package xyz.luomu32.config.server.console.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
 import xyz.luomu32.config.server.console.entity.Log;
 import xyz.luomu32.config.server.console.entity.LogChangeType;
@@ -16,10 +20,14 @@ import xyz.luomu32.config.server.console.service.ClientService;
 import xyz.luomu32.config.server.console.service.ConfigServerService;
 
 import javax.servlet.http.HttpSession;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 
 @RestController
 @RequestMapping("config/{application}")
@@ -131,4 +139,47 @@ public class ConfigController {
         log.setOperatorName(currentUser.getUsername());
         logRepo.save(log);
     }
+
+    @GetMapping("/export{extension:\\.(properties|yml)$}")
+    public HttpEntity<byte[]> export(@PathVariable String application,
+                                     @PathVariable String extension,
+                                     @RequestParam(required = false) String profile) {
+
+        ConfigServer configServer = configServerService.get();
+        if (null == configServer)
+            return (HttpEntity<byte[]>) HttpEntity.EMPTY;
+
+        Map<String, String> configs = clientService.findAll(configServer, application, profile);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.builder("attachment").filename(application + null == profile ? "" : ("." + profile) + extension).build());
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+
+        if (extension.equals(".properties")) {
+            Properties properties = new Properties();
+
+            configs.forEach((k, v) -> {
+                properties.setProperty(k, v);
+            });
+
+            try {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                properties.store(out, "");
+
+                return new HttpEntity(out.toByteArray(), headers);
+            } catch (IOException e) {
+                return (HttpEntity<byte[]>) HttpEntity.EMPTY;
+            }
+        } else {
+
+            DumperOptions dumperOptions = new DumperOptions();
+            dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+            Yaml yaml = new Yaml(dumperOptions);
+            StringWriter writer = new StringWriter();
+            yaml.dump(configs, writer);
+
+            return new HttpEntity<>(writer.toString().getBytes(), headers);
+        }
+    }
+
 }
