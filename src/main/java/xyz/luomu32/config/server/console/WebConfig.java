@@ -50,8 +50,25 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 (Parser<LocalDate>) (text, locale) -> LocalDate.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
+    //这是替换。会将默认的HttpMessageConverter都清空
     @Override
     protected void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+
+    }
+
+    @Override
+    protected void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+
+
+        int pos = 0;
+        for (HttpMessageConverter converter : converters) {
+            if (converter instanceof MappingJackson2HttpMessageConverter) {
+                break;
+            }
+            pos++;
+        }
+        converters.remove(pos);
+
         //DateFormat 对LocalDateTime等无效
         //SerializationFeature.WRITE_DATES_AS_TIMESTAMPS设置后，LocalDateTime会被序列化成[year,month,day,hour,minus,sec]这种的时间戳格式
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder()
@@ -71,7 +88,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthenticationInterceptor()).excludePathPatterns("/auth", "/error");
+//        registry.addInterceptor(new AuthenticationInterceptor()).excludePathPatterns("/auth", "/error");
 //        registry.addInterceptor(new AuthorizationInterceptor()).excludePathPatterns("/auth");
         registry.addInterceptor(new ResponseStatusInterceptor());
     }
