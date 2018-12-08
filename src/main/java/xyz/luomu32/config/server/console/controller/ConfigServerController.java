@@ -15,9 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("server")
@@ -67,7 +65,7 @@ public class ConfigServerController {
 //            @RequestParam("filename") String name,
             @RequestPart("file") MultipartFile key) {
         //TODO 文件类型检查
-        //TODO 文件大小限定设置
+        //TODO 文件大小限定设置c
         try {
             Path path = Paths.get(System.getProperty("user.home"), ".config_server_key");
             if (!Files.exists(path)) {
@@ -150,7 +148,6 @@ public class ConfigServerController {
 
     @Deprecated
     @GetMapping("{id}/{application}/profiles")
-
     public Set<String> getProfiles(@PathVariable Long id, @PathVariable String application) {
         Optional<ConfigServer> configServer = configServerRepo.findById(id);
         if (!configServer.isPresent())
