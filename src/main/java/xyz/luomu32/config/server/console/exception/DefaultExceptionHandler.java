@@ -1,6 +1,8 @@
 package xyz.luomu32.config.server.console.exception;
 
 import org.apache.zookeeper.KeeperException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -20,6 +22,8 @@ import static org.apache.zookeeper.KeeperException.Code.NODEEXISTS;
 
 @RestControllerAdvice
 public class DefaultExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultExceptionHandler.class);
 
     @Autowired
     private MessageSource messageSource;
@@ -60,6 +64,8 @@ public class DefaultExceptionHandler {
                 return new ApiResponse("配置已存在");
             }
         }
+
+        LOGGER.error("", e);
         Locale locale = LocaleContextHolder.getLocale();
         String message = messageSource.getMessage(e.getMessage(), new Object[0], "error", locale);
         return new ApiResponse(message);
