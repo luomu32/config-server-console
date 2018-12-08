@@ -1,7 +1,6 @@
 package xyz.luomu32.config.server.console.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -16,9 +15,6 @@ import xyz.luomu32.config.server.console.entity.Log;
 import xyz.luomu32.config.server.console.repo.LogRepo;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("log")
