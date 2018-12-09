@@ -1,4 +1,4 @@
-package xyz.luomu32.config.server.console.exception;
+package xyz.luomu32.config.server.console.web.exception;
 
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import xyz.luomu32.config.server.console.pojo.ApiResponse;
 
 import java.util.Locale;
@@ -28,14 +28,14 @@ public class DefaultExceptionHandler {
     @Autowired
     private MessageSource messageSource;
 
-    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
-    @ExceptionHandler(UserNotAuthenticationException.class)
-    public void userNotAuthenticationExceptionHandle(UserNotAuthenticationException e) {
-
-    }
+//    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
+//    @ExceptionHandler(UserNotAuthenticationException.class)
+//    public void userNotAuthenticationExceptionHandle(UserNotAuthenticationException e) {
+//
+//    }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(BindException.class)
+    @ExceptionHandler
     public ApiResponse bindExceptionHandle(BindException e) {
         return new ApiResponse(e.getFieldError().getDefaultMessage());
     }
@@ -56,7 +56,13 @@ public class DefaultExceptionHandler {
         return new ApiResponse(message);
     }
 
-    @ExceptionHandler(RuntimeException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler
+    public void noHandlerFoundExceptionHandle(NoHandlerFoundException e) {
+
+    }
+
+    @ExceptionHandler
     public ApiResponse runtimeExceptionHandle(RuntimeException e) {
         Throwable cause = e.getCause();
         if (null != cause && (cause instanceof KeeperException)) {

@@ -1,9 +1,9 @@
-package xyz.luomu32.config.server.console.interceptor;
+package xyz.luomu32.config.server.console.web.interceptor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
-import xyz.luomu32.config.server.console.exception.UserNotAuthenticationException;
+import xyz.luomu32.config.server.console.web.exception.UserNotAuthenticationException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

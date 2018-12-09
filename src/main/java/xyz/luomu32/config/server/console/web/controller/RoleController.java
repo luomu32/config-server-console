@@ -1,6 +1,5 @@
-package xyz.luomu32.config.server.console.controller;
+package xyz.luomu32.config.server.console.web.controller;
 
-import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.validation.annotation.Validated;

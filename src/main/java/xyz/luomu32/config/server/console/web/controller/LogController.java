@@ -1,4 +1,4 @@
-package xyz.luomu32.config.server.console.controller;
+package xyz.luomu32.config.server.console.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;

@@ -1,27 +1,22 @@
-package xyz.luomu32.config.server.console.controller;
+package xyz.luomu32.config.server.console.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import xyz.luomu32.config.server.console.entity.DeleteFlagEnum;
 import xyz.luomu32.config.server.console.entity.Role;
 import xyz.luomu32.config.server.console.entity.User;
 import xyz.luomu32.config.server.console.entity.UserApplication;
-import xyz.luomu32.config.server.console.interceptor.AuthenticationInterceptor;
+import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
 import xyz.luomu32.config.server.console.pojo.LoginedUser;
 import xyz.luomu32.config.server.console.pojo.UserPojo;
 import xyz.luomu32.config.server.console.repo.UserApplicationRepo;
 import xyz.luomu32.config.server.console.repo.UserRepo;
 
-import javax.annotation.PostConstruct;
-import javax.persistence.criteria.Predicate;
 import javax.servlet.http.HttpSession;
-import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,17 +1,22 @@
-package xyz.luomu32.config.server.console.controller;
+package xyz.luomu32.config.server.console.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.View;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
 import xyz.luomu32.config.server.console.entity.Log;
 import xyz.luomu32.config.server.console.entity.LogChangeType;
-import xyz.luomu32.config.server.console.interceptor.AuthenticationInterceptor;
+import xyz.luomu32.config.server.console.web.expansion.DownloadView;
+import xyz.luomu32.config.server.console.web.expansion.PropertiesView;
+import xyz.luomu32.config.server.console.web.expansion.YamlView;
+import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
 import xyz.luomu32.config.server.console.pojo.Config;
 import xyz.luomu32.config.server.console.pojo.LoginedUser;
 import xyz.luomu32.config.server.console.repo.ConfigServerRepo;
@@ -140,46 +145,24 @@ public class ConfigController {
         logRepo.save(log);
     }
 
-    @GetMapping("/export{extension:\\.(properties|yml)$}")
-    public HttpEntity<byte[]> export(@PathVariable String application,
-                                     @PathVariable String extension,
-                                     @RequestParam(required = false) String profile) {
+    @GetMapping("export")
+    public DownloadView export(@PathVariable String application,
+                               @RequestParam String format,
+                               @RequestParam(required = false) String profile, Model model) {
 
         ConfigServer configServer = configServerService.get();
         if (null == configServer)
-            return (HttpEntity<byte[]>) HttpEntity.EMPTY;
+            return null;
 
         Map<String, String> configs = clientService.findAll(configServer, application, profile);
+        model.addAllAttributes(configs);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentDisposition(ContentDisposition.builder("attachment").filename(application + null == profile ? "" : ("." + profile) + extension).build());
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        String filename = application + (null == profile ? "" : ("." + profile));
 
-        if (extension.equals(".properties")) {
-            Properties properties = new Properties();
-
-            configs.forEach((k, v) -> {
-                properties.setProperty(k, v);
-            });
-
-            try {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                properties.store(out, "");
-
-                return new HttpEntity(out.toByteArray(), headers);
-            } catch (IOException e) {
-                return (HttpEntity<byte[]>) HttpEntity.EMPTY;
-            }
+        if (format.equals(".properties")) {
+            return new PropertiesView(filename);
         } else {
-
-            DumperOptions dumperOptions = new DumperOptions();
-            dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            Yaml yaml = new Yaml(dumperOptions);
-            StringWriter writer = new StringWriter();
-            yaml.dump(configs, writer);
-
-            return new HttpEntity<>(writer.toString().getBytes(), headers);
+            return new YamlView(filename);
         }
     }
-
 }

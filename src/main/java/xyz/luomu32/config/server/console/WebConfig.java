@@ -4,30 +4,36 @@ import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.format.FormatterRegistry;
 import org.springframework.format.Parser;
 import org.springframework.format.Printer;
+import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.ViewResolver;
+import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
-import xyz.luomu32.config.server.console.interceptor.AuthenticationInterceptor;
-import xyz.luomu32.config.server.console.interceptor.ResponseStatusInterceptor;
+import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
+import xyz.luomu32.config.server.console.web.expansion.MyMediaType;
+import xyz.luomu32.config.server.console.web.expansion.PropertiesViewResolver;
+import xyz.luomu32.config.server.console.web.interceptor.ResponseStatusInterceptor;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Configuration
 public class WebConfig extends WebMvcConfigurationSupport {
@@ -43,18 +49,35 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Override
     protected void addFormatters(FormatterRegistry registry) {
-
         registry.addFormatterForFieldType(
                 LocalDate.class,
                 (Printer<LocalDate>) (date, Locale) -> date.toString(),
                 (Parser<LocalDate>) (text, locale) -> LocalDate.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
-    //这是替换。会将默认的HttpMessageConverter都清空
-    @Override
-    protected void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+//    @Override
+//    protected void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+//        configurer.favorParameter(false);
+//        configurer.favorPathExtension(true);
+//        configurer.ignoreAcceptHeader(true);
+//        configurer.ignoreUnknownPathExtensions(true);
+//        configurer.mediaType("properties", MyMediaType.APPLICATION_PROPERTY);
+//    }
+//
+//    @Bean
+//    ContentNegotiatingViewResolver contentNegotiatingViewResolver() {
+//        ContentNegotiatingViewResolver resolver = new ContentNegotiatingViewResolver();
+//        List<ViewResolver> viewResolvers = new ArrayList<>();
+//        viewResolvers.add(new PropertiesViewResolver());
+//        resolver.setViewResolvers(viewResolvers);
+//        return resolver;
+//    }
 
-    }
+    //这是替换。会将默认的HttpMessageConverter都清空
+//    @Override
+//    protected void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+//
+//    }
 
     @Override
     protected void extendMessageConverters(List<HttpMessageConverter<?>> converters) {

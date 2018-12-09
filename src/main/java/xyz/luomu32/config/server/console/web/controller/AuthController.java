@@ -1,11 +1,11 @@
-package xyz.luomu32.config.server.console.controller;
+package xyz.luomu32.config.server.console.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import xyz.luomu32.config.server.console.entity.User;
-import xyz.luomu32.config.server.console.interceptor.AuthenticationInterceptor;
+import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
 import xyz.luomu32.config.server.console.pojo.LoginedUser;
 import xyz.luomu32.config.server.console.pojo.UserPojo;
 import xyz.luomu32.config.server.console.repo.UserRepo;

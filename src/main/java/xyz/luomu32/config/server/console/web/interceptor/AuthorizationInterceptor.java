@@ -1,4 +1,4 @@
-package xyz.luomu32.config.server.console.interceptor;
+package xyz.luomu32.config.server.console.web.interceptor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
