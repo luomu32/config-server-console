@@ -28,11 +28,11 @@ public class DefaultExceptionHandler {
     @Autowired
     private MessageSource messageSource;
 
-//    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
-//    @ExceptionHandler(UserNotAuthenticationException.class)
-//    public void userNotAuthenticationExceptionHandle(UserNotAuthenticationException e) {
-//
-//    }
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(UserNotAuthenticationException.class)
+    public void userNotAuthenticationExceptionHandle(UserNotAuthenticationException e) {
+
+    }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
