@@ -24,8 +24,9 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
-import xyz.luomu32.config.server.console.web.expansion.MyMediaType;
-import xyz.luomu32.config.server.console.web.expansion.PropertiesViewResolver;
+import xyz.luomu32.config.server.console.web.expansion.PropertiesDownloadViewResolver;
+import xyz.luomu32.config.server.console.web.expansion.YamlViewResolver;
+import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
 import xyz.luomu32.config.server.console.web.interceptor.ResponseStatusInterceptor;
 
 import java.text.SimpleDateFormat;
@@ -37,6 +38,10 @@ import java.util.List;
 
 @Configuration
 public class WebConfig extends WebMvcConfigurationSupport {
+
+    public final static MediaType APPLICATION_PROPERTY = new MediaType("application", "property");
+
+    public final static MediaType APPLICATION_YML = new MediaType("application", "yml");
 
     @Autowired
     private MessageSource messageSource;
@@ -55,34 +60,32 @@ public class WebConfig extends WebMvcConfigurationSupport {
                 (Parser<LocalDate>) (text, locale) -> LocalDate.parse(text, DateTimeFormatter.ofPattern("yyyy-MM-dd")));
     }
 
-//    @Override
-//    protected void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
-//        configurer.favorParameter(false);
-//        configurer.favorPathExtension(true);
-//        configurer.ignoreAcceptHeader(true);
-//        configurer.ignoreUnknownPathExtensions(true);
-//        configurer.mediaType("properties", MyMediaType.APPLICATION_PROPERTY);
-//    }
-//
-//    @Bean
-//    ContentNegotiatingViewResolver contentNegotiatingViewResolver() {
-//        ContentNegotiatingViewResolver resolver = new ContentNegotiatingViewResolver();
-//        List<ViewResolver> viewResolvers = new ArrayList<>();
-//        viewResolvers.add(new PropertiesViewResolver());
-//        resolver.setViewResolvers(viewResolvers);
-//        return resolver;
-//    }
+    @Override
+    protected void configureContentNegotiation(ContentNegotiationConfigurer configurer) {
+        configurer.favorParameter(false);
+        configurer.favorPathExtension(true);
+        configurer.ignoreAcceptHeader(true);
+        configurer.useRegisteredExtensionsOnly(true);
+        configurer.mediaType("properties", APPLICATION_PROPERTY);
+        configurer.mediaType("yml", APPLICATION_YML);
+    }
 
-    //这是替换。会将默认的HttpMessageConverter都清空
-//    @Override
-//    protected void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-//
-//    }
+    //
+    @Bean
+    ContentNegotiatingViewResolver contentNegotiatingViewResolver(@Autowired ContentNegotiationManager contentNegotiationManager) {
+        ContentNegotiatingViewResolver resolver = new ContentNegotiatingViewResolver();
+        List<ViewResolver> viewResolvers = new ArrayList<>();
+        viewResolvers.add(new PropertiesDownloadViewResolver());
+        viewResolvers.add(new YamlViewResolver());
+        resolver.setViewResolvers(viewResolvers);
+        resolver.setContentNegotiationManager(contentNegotiationManager);
+        resolver.setUseNotAcceptableStatusCode(true);
+        return resolver;
+    }
+
 
     @Override
     protected void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
-
-
         int pos = 0;
         for (HttpMessageConverter converter : converters) {
             if (converter instanceof MappingJackson2HttpMessageConverter) {
@@ -97,7 +100,6 @@ public class WebConfig extends WebMvcConfigurationSupport {
         Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder()
                 .serializerByType(LocalDateTime.class, new LocalDateTimeSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .serializerByType(LocalDate.class, new LocalDateSerializer(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
-//                .indentOutput(true)
                 .dateFormat(new SimpleDateFormat("yyyy-MM-dd"));
         converters.add(new MappingJackson2HttpMessageConverter(builder.build()));
     }
@@ -111,7 +113,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
-//        registry.addInterceptor(new AuthenticationInterceptor()).excludePathPatterns("/auth", "/error");
+        registry.addInterceptor(new AuthenticationInterceptor()).excludePathPatterns("/auth", "/error");
 //        registry.addInterceptor(new AuthorizationInterceptor()).excludePathPatterns("/auth");
         registry.addInterceptor(new ResponseStatusInterceptor());
     }
