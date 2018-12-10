@@ -1,21 +1,18 @@
 package xyz.luomu32.config.server.console.web.controller;
 
+import org.aspectj.util.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.View;
-import org.yaml.snakeyaml.DumperOptions;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
 import org.yaml.snakeyaml.Yaml;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
 import xyz.luomu32.config.server.console.entity.Log;
 import xyz.luomu32.config.server.console.entity.LogChangeType;
 import xyz.luomu32.config.server.console.web.expansion.DownloadView;
 import xyz.luomu32.config.server.console.web.expansion.PropertiesView;
-import xyz.luomu32.config.server.console.web.expansion.YamlView;
+import xyz.luomu32.config.server.console.web.expansion.YamlDownLoadView;
 import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
 import xyz.luomu32.config.server.console.pojo.Config;
 import xyz.luomu32.config.server.console.pojo.LoginedUser;
@@ -25,9 +22,7 @@ import xyz.luomu32.config.server.console.service.ClientService;
 import xyz.luomu32.config.server.console.service.ConfigServerService;
 
 import javax.servlet.http.HttpSession;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
@@ -145,11 +140,10 @@ public class ConfigController {
         logRepo.save(log);
     }
 
-    @GetMapping("export")
-    public DownloadView export(@PathVariable String application,
-                               @RequestParam String format,
-                               @RequestParam(required = false) String profile, Model model) {
-
+    @PostMapping("export")
+    public ModelAndView export(@PathVariable String application,
+                               @RequestParam(required = false) String profile,
+                               Model model) {
         ConfigServer configServer = configServerService.get();
         if (null == configServer)
             return null;
@@ -159,10 +153,44 @@ public class ConfigController {
 
         String filename = application + (null == profile ? "" : ("." + profile));
 
-        if (format.equals(".properties")) {
-            return new PropertiesView(filename);
+        return new ModelAndView(filename);
+    }
+
+    @PostMapping("import")
+    public void importing(@PathVariable String application,
+                          @RequestParam(required = false) String profile,
+                          @RequestPart("file") MultipartFile file) {
+
+        String filename = file.getOriginalFilename();
+        int pos = filename.lastIndexOf(".");
+        String ext = filename.substring(pos + 1, filename.length());
+
+        ConfigServer configServer = configServerService.get();
+        if (null == configServer)
+            return;
+
+
+        if (ext.equalsIgnoreCase("properties")) {
+            Properties properties = new Properties();
+            try {
+                properties.load(file.getInputStream());
+                properties.stringPropertyNames().forEach(k -> {
+                    clientService.add(configServer, application, profile, k, properties.getProperty(k));
+                });
+            } catch (IOException e) {
+
+            }
+        } else if (ext.equalsIgnoreCase("yml")) {
+            Yaml yaml=new Yaml();
+            try {
+                yaml.load(file.getInputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         } else {
-            return new YamlView(filename);
+            throw new RuntimeException("upload.file.type.not.support");
         }
+
+
     }
 }
