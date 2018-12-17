@@ -95,4 +95,12 @@ public class ClientService implements Client, ApplicationContextAware {
             return Collections.emptyList();
         return client.getProfiles(server, application);
     }
+
+    @Override
+    public void deleteApplication(ConfigServer server, String application, String profile) {
+        Client client = this.clientMaps.get(server.getType());
+        if (client == null)
+            return;
+        client.deleteApplication(server, application, profile);
+    }
 }

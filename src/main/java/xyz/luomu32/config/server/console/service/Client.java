@@ -28,4 +28,6 @@ public interface Client {
     List<String> getProfiles(ConfigServer server, String application);
 
     void addApplication(ConfigServer server, String application, String profile);
+
+    void deleteApplication(ConfigServer server, String application, String profile);
 }

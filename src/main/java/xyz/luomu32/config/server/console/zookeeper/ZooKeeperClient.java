@@ -210,4 +210,18 @@ public class ZooKeeperClient implements Client {
             return Collections.emptyList();
         }
     }
+
+    @Override
+    public void deleteApplication(ConfigServer server, String application, String profile) {
+        CuratorFramework client = this.getClient(server);
+        String path;
+        if (profile == null)
+            path = application;
+        else path = application + "," + profile;
+        try {
+            client.delete().forPath("/" + path);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
