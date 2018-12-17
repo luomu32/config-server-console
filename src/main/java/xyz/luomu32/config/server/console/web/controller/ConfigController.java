@@ -2,6 +2,8 @@ package xyz.luomu32.config.server.console.web.controller;
 
 import org.aspectj.util.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -181,9 +183,13 @@ public class ConfigController {
 
             }
         } else if (ext.equalsIgnoreCase("yml")) {
-            Yaml yaml=new Yaml();
             try {
-                yaml.load(file.getInputStream());
+                YamlPropertiesFactoryBean factoryBean = new YamlPropertiesFactoryBean();
+                factoryBean.setResources(new InputStreamResource(file.getInputStream()));
+                Properties properties = factoryBean.getObject();
+                properties.forEach((k, v) ->
+                        clientService.add(configServer, application, profile, k.toString(), v.toString()));
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
