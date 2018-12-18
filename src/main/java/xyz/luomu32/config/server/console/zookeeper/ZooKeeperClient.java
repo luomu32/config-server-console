@@ -2,18 +2,18 @@ package xyz.luomu32.config.server.console.zookeeper;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.api.ChildrenDeletable;
 import org.apache.curator.framework.api.CuratorEventType;
 import org.apache.curator.retry.RetryOneTime;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.codec.multipart.SynchronossPartHttpMessageReader;
 import org.springframework.stereotype.Component;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
 import xyz.luomu32.config.server.console.entity.ConfigServerType;
 import xyz.luomu32.config.server.console.service.Client;
+import xyz.luomu32.config.server.console.web.exception.ServiceException;
+import xyz.luomu32.config.server.console.web.exception.ServiceExceptionEnum;
 
-import javax.annotation.PostConstruct;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -192,6 +192,9 @@ public class ZooKeeperClient implements Client {
         try {
             client.create().forPath("/" + path);
         } catch (Exception e) {
+            if (e instanceof KeeperException.NodeExistsException) {
+                throw new ServiceException(ServiceExceptionEnum.CONFIG_EXISTED);
+            }
             e.printStackTrace();
         }
     }
@@ -214,14 +217,28 @@ public class ZooKeeperClient implements Client {
     @Override
     public void deleteApplication(ConfigServer server, String application, String profile) {
         CuratorFramework client = this.getClient(server);
-        String path;
-        if (profile == null)
-            path = application;
-        else path = application + "," + profile;
+        if (profile == null) {
+            try {
+                client.getChildren().forPath("/").stream().filter(c -> c.startsWith(application)).forEach(c -> {
+                    this.delete("/" + c, client);
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else
+            this.delete("/" + application + "," + profile, client);
+    }
+
+
+    private void delete(String path, CuratorFramework client) {
         try {
-            client.delete().forPath("/" + path);
+            client.delete().forPath(path);
         } catch (Exception e) {
+            if (e instanceof KeeperException.NoNodeException) {
+                throw new ServiceException(ServiceExceptionEnum.CONFIG_NOT_EXISTED);
+            }
             e.printStackTrace();
         }
     }
+
 }
