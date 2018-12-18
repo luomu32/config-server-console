@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 public interface UserRepo extends JpaRepository<User, Long> {
 
 
-    Optional<User> findByUsername(String username);
+    Optional<User> findByUsernameAndDeleted(String username, DeleteFlagEnum deleteFlag);
 
     Optional<User> findByIdAndDeleted(Long id, DeleteFlagEnum deleteFlag);
 
