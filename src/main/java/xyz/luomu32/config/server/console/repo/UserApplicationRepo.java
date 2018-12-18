@@ -11,4 +11,9 @@ public interface UserApplicationRepo extends JpaRepository<UserApplication, Long
     List<UserApplication> findByUserId(Long userId);
 
     Optional<UserApplication> findByUserIdAndApplication(Long userId, String application);
+
+
+    void deleteByUserId(Long userId);
+
+    void deleteByUserIdAndApplication(Long userId, String application);
 }
