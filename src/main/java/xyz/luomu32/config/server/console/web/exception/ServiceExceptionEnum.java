@@ -4,17 +4,29 @@ import lombok.Getter;
 
 public enum ServiceExceptionEnum {
 
-    CONFIG_SERVER_NOT_FOUND(1002, "config.server.not.found");
+    CONFIG_SERVER_NOT_FOUND("1002", "config.server.not.found"),
 
+    CONFIG_EXISTED("1003", "config.existed"),
+
+    CONFIG_NOT_EXISTED("1004", "config.not.existed"),
+
+
+    USER_PASSWORD_NOT_MATCH("user.password.not.match"),
+    USER_NOT_FOUND("user.not.found"),
+    USER_EXISTED("user.existed");
 
     @Getter
-    private int code;
+    private String code;
 
     @Getter
     private String message;
-    
-    ServiceExceptionEnum(int code, String message) {
+
+    ServiceExceptionEnum(String code, String message) {
         this.code = code;
+        this.message = message;
+    }
+
+    ServiceExceptionEnum(String message) {
         this.message = message;
     }
 

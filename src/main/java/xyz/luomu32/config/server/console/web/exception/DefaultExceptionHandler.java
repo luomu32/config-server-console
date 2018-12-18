@@ -63,6 +63,12 @@ public class DefaultExceptionHandler {
     }
 
     @ExceptionHandler
+    public ApiResponse serviceExceptionHandle(ServiceException e) {
+        String message = messageSource.getMessage(e.getMessage(), e.getParams(), LocaleContextHolder.getLocale());
+        return new ApiResponse(e.getCode(), message);
+    }
+
+    @ExceptionHandler
     public ApiResponse runtimeExceptionHandle(RuntimeException e) {
         Throwable cause = e.getCause();
         if (null != cause && (cause instanceof KeeperException)) {
