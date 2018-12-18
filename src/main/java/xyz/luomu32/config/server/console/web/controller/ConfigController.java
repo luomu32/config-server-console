@@ -1,6 +1,5 @@
 package xyz.luomu32.config.server.console.web.controller;
 
-import org.aspectj.util.FileUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.core.io.InputStreamResource;
@@ -8,16 +7,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
-import org.yaml.snakeyaml.Yaml;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
 import xyz.luomu32.config.server.console.entity.Log;
 import xyz.luomu32.config.server.console.entity.LogChangeType;
-import xyz.luomu32.config.server.console.web.expansion.DownloadView;
-import xyz.luomu32.config.server.console.web.expansion.PropertiesView;
-import xyz.luomu32.config.server.console.web.expansion.YamlDownLoadView;
 import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
 import xyz.luomu32.config.server.console.pojo.Config;
-import xyz.luomu32.config.server.console.pojo.LoginedUser;
+import xyz.luomu32.config.server.console.pojo.UserPrincipal;
 import xyz.luomu32.config.server.console.repo.ConfigServerRepo;
 import xyz.luomu32.config.server.console.repo.LogRepo;
 import xyz.luomu32.config.server.console.service.ClientService;
@@ -73,7 +68,7 @@ public class ConfigController {
     //put form类型的好像不行
     @PutMapping
     public void update(@PathVariable String application,
-                       @RequestBody Config config, HttpSession session) {
+                       @RequestBody Config config, UserPrincipal currentUser) {
         ConfigServer configServer = configServerService.get();
         if (null == configServer)
             return;
@@ -82,7 +77,6 @@ public class ConfigController {
         if (oldValue.equals(config.getValue()))
             return;
         clientService.update(configServer, application, Optional.ofNullable(config.getProfile()), config.getKey(), config.getValue());
-        LoginedUser currentUser = (LoginedUser) session.getAttribute(AuthenticationInterceptor.USER_HOLDER);
         Log log = new Log();
         log.setApplication(application);
         log.setProfile(config.getProfile());
@@ -100,14 +94,13 @@ public class ConfigController {
                        @RequestParam String key,
                        @RequestParam String value,
                        @RequestParam(required = false) String profile,
-                       HttpSession session) {
+                       UserPrincipal currentUser) {
 
         ConfigServer configServer = configServerService.get();
 //                .orElseThrow(() -> new RuntimeException("config.server.not.found"));
 
         clientService.add(configServer, application, profile, key, value);
 
-        LoginedUser currentUser = (LoginedUser) session.getAttribute(AuthenticationInterceptor.USER_HOLDER);
         Log log = new Log();
         log.setApplication(application);
         log.setProfile(profile);
@@ -123,13 +116,12 @@ public class ConfigController {
     @DeleteMapping
     public void delete(@PathVariable String application,
                        @RequestParam String key,
-                       @RequestParam(required = false) String profile, HttpSession session) {
+                       @RequestParam(required = false) String profile, UserPrincipal currentUser) {
         ConfigServer configServer = configServerService.get();
         if (null == configServer)
             return;
         String oldValue = clientService.findValue(configServer, application, profile, key);
         clientService.delete(configServer, application, profile, key);
-        LoginedUser currentUser = (LoginedUser) session.getAttribute(AuthenticationInterceptor.USER_HOLDER);
         Log log = new Log();
         log.setApplication(application);
         log.setProfile(profile);

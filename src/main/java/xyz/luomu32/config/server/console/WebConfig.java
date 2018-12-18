@@ -25,6 +25,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
 import xyz.luomu32.config.server.console.web.expansion.PropertiesDownloadViewResolver;
+import xyz.luomu32.config.server.console.web.expansion.UserPrincipalArgumentResolver;
 import xyz.luomu32.config.server.console.web.expansion.YamlViewResolver;
 import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
 import xyz.luomu32.config.server.console.web.interceptor.ResponseStatusInterceptor;
@@ -121,6 +122,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
     @Override
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(new PageableHandlerMethodArgumentResolver());
+        argumentResolvers.add(new UserPrincipalArgumentResolver());
     }
 }
 
