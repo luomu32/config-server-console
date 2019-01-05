@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
-import xyz.luomu32.config.server.console.pojo.Server;
+import xyz.luomu32.config.server.console.web.request.Server;
 import xyz.luomu32.config.server.console.repo.ConfigServerRepo;
 import xyz.luomu32.config.server.console.service.ClientService;
 import xyz.luomu32.config.server.console.service.ConfigServerService;

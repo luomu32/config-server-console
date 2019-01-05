@@ -10,16 +10,18 @@ import xyz.luomu32.config.server.console.entity.DeleteFlagEnum;
 import xyz.luomu32.config.server.console.entity.Role;
 import xyz.luomu32.config.server.console.entity.User;
 import xyz.luomu32.config.server.console.entity.UserApplication;
-import xyz.luomu32.config.server.console.pojo.UserPojo;
-import xyz.luomu32.config.server.console.pojo.UserPrincipal;
+import xyz.luomu32.config.server.console.web.request.UserPojo;
+import xyz.luomu32.config.server.console.web.request.UserPrincipal;
 import xyz.luomu32.config.server.console.repo.UserApplicationRepo;
 import xyz.luomu32.config.server.console.repo.UserRepo;
 import xyz.luomu32.config.server.console.service.UserService;
 import xyz.luomu32.config.server.console.web.exception.ServiceException;
 import xyz.luomu32.config.server.console.web.exception.ServiceExceptionEnum;
 
+import javax.swing.text.html.Option;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,9 +44,18 @@ public class UserController {
     }
 
     @GetMapping
-    public Page<User> findAll(Pageable page) {
+    public Page<User> findAll(@RequestParam Optional<Long> roleId,
+                              @RequestParam Optional<String> username,
+                              Pageable page) {
         User query = new User();
         query.setDeleted(DeleteFlagEnum.UN_DELETED);
+        username.ifPresent((name) -> query.setUsername(name));
+        roleId.ifPresent(r -> {
+            Role role = new Role();
+            role.setId(r);
+            query.setRole(role);
+        });
+
 
         return userRepo.findAll(Example.of(query), page);
     }

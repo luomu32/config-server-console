@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
-import xyz.luomu32.config.server.console.pojo.ApiResponse;
+import xyz.luomu32.config.server.console.web.response.ApiErrorResponse;
 
 import java.util.Locale;
 
@@ -31,29 +31,33 @@ public class DefaultExceptionHandler {
     @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
     @ExceptionHandler(UserNotAuthenticationException.class)
     public void userNotAuthenticationExceptionHandle(UserNotAuthenticationException e) {
+    }
 
+    @ResponseStatus(code = HttpStatus.FORBIDDEN)
+    @ExceptionHandler
+    public void userAccessDenyExceptionHandle(UserAccessDenyException e) {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
-    public ApiResponse bindExceptionHandle(BindException e) {
-        return new ApiResponse(e.getFieldError().getDefaultMessage());
+    public ApiErrorResponse bindExceptionHandle(BindException e) {
+        return new ApiErrorResponse(e.getFieldError().getDefaultMessage());
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
-    public ApiResponse methodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+    public ApiErrorResponse methodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
         String message = messageSource.getMessage("parameter.invalid",
                 new Object[]{e.getValue(), e.getRequiredType().getName()},
                 LocaleContextHolder.getLocale());
-        return new ApiResponse(message);
+        return new ApiErrorResponse(message);
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler
-    public ApiResponse missingServletRequestParameterException(MissingServletRequestParameterException e) {
+    public ApiErrorResponse missingServletRequestParameterException(MissingServletRequestParameterException e) {
         String message = messageSource.getMessage("parameter.missing", new Object[]{e.getParameterName()}, LocaleContextHolder.getLocale());
-        return new ApiResponse(message);
+        return new ApiErrorResponse(message);
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -63,23 +67,23 @@ public class DefaultExceptionHandler {
     }
 
     @ExceptionHandler
-    public ApiResponse serviceExceptionHandle(ServiceException e) {
+    public ApiErrorResponse serviceExceptionHandle(ServiceException e) {
         String message = messageSource.getMessage(e.getMessage(), e.getParams(), LocaleContextHolder.getLocale());
-        return new ApiResponse(e.getCode(), message);
+        return new ApiErrorResponse(e.getCode(), message);
     }
 
     @ExceptionHandler
-    public ApiResponse runtimeExceptionHandle(RuntimeException e) {
+    public ApiErrorResponse runtimeExceptionHandle(RuntimeException e) {
         Throwable cause = e.getCause();
         if (null != cause && (cause instanceof KeeperException)) {
             if (((KeeperException) cause).code() == NODEEXISTS) {
-                return new ApiResponse("配置已存在");
+                return new ApiErrorResponse("配置已存在");
             }
         }
 
         LOGGER.error("", e);
         Locale locale = LocaleContextHolder.getLocale();
         String message = messageSource.getMessage(e.getMessage(), new Object[0], "error", locale);
-        return new ApiResponse(message);
+        return new ApiErrorResponse(message);
     }
 }

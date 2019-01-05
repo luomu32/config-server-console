@@ -5,7 +5,7 @@ import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import xyz.luomu32.config.server.console.pojo.UserPrincipal;
+import xyz.luomu32.config.server.console.web.request.UserPrincipal;
 import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
 
 import javax.servlet.http.HttpSession;

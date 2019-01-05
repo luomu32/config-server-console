@@ -3,8 +3,8 @@ package xyz.luomu32.config.server.console.web.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
-import xyz.luomu32.config.server.console.pojo.Application;
-import xyz.luomu32.config.server.console.pojo.UserPrincipal;
+import xyz.luomu32.config.server.console.web.request.Application;
+import xyz.luomu32.config.server.console.web.request.UserPrincipal;
 import xyz.luomu32.config.server.console.repo.UserApplicationRepo;
 import xyz.luomu32.config.server.console.service.ClientService;
 import xyz.luomu32.config.server.console.service.ConfigServerService;
@@ -28,28 +28,30 @@ public class ApplicationController {
     @Autowired
     private ClientService clientService;
 
+
+
     @GetMapping
-    public List<Application> getApplications(UserPrincipal currentUser) {
+    public List<Application> getApplications() {
         ConfigServer server = configServerService.get();
         if (null == server)
             return Collections.emptyList();
 
-        List<String> applicationNames = userApplicationRepo.findByUserId(currentUser.getId())
-                .stream()
-                .map(u -> u.getApplication())
-                .collect(Collectors.toList());
+//        List<String> applicationNames = userApplicationRepo.findByUserId(currentUser.getId())
+//                .stream()
+//                .map(u -> u.getApplication())
+//                .collect(Collectors.toList());
 
         List<Application> result = new ArrayList<>();
 
         Map<String/*application name*/, List<String>/*profiles*/> applications = clientService.getApplicationsWithProfile(server)
                 .stream()
-                .filter(a -> {
-                    if (a.indexOf(",") == -1) {
-                        return applicationNames.contains(a);
-                    } else {
-                        return applicationNames.contains(a.substring(0, a.indexOf(",")));
-                    }
-                })
+//                .filter(a -> {
+//                    if (a.indexOf(",") == -1) {
+//                        return applicationNames.contains(a);
+//                    } else {
+//                        return applicationNames.contains(a.substring(0, a.indexOf(",")));
+//                    }
+//                })
                 .collect(Collectors.groupingBy(a -> {
                     if (a.indexOf(",") == -1)
                         return a;

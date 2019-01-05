@@ -1,4 +1,4 @@
-package xyz.luomu32.config.server.console.pojo;
+package xyz.luomu32.config.server.console.web.request;
 
 import lombok.Data;
 import xyz.luomu32.config.server.console.entity.ConfigServerType;

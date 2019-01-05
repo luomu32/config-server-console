@@ -3,6 +3,7 @@ package xyz.luomu32.config.server.console;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +18,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.accept.ContentNegotiationManager;
+import org.springframework.web.filter.HttpPutFormContentFilter;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
@@ -24,10 +26,13 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
+import xyz.luomu32.config.server.console.repo.MenuActionRepo;
+import xyz.luomu32.config.server.console.repo.MenuRepo;
 import xyz.luomu32.config.server.console.web.expansion.PropertiesDownloadViewResolver;
 import xyz.luomu32.config.server.console.web.expansion.UserPrincipalArgumentResolver;
 import xyz.luomu32.config.server.console.web.expansion.YamlViewResolver;
 import xyz.luomu32.config.server.console.web.interceptor.AuthenticationInterceptor;
+import xyz.luomu32.config.server.console.web.interceptor.AuthorizationInterceptor;
 import xyz.luomu32.config.server.console.web.interceptor.ResponseStatusInterceptor;
 
 import java.text.SimpleDateFormat;
@@ -46,6 +51,12 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Autowired
     private MessageSource messageSource;
+
+    @Autowired
+    private MenuRepo menuRepo;
+
+    @Autowired
+    private MenuActionRepo menuActionRepo;
 
     @Override
     protected void addCorsMappings(CorsRegistry registry) {
@@ -114,8 +125,8 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthenticationInterceptor()).excludePathPatterns("/auth", "/error");
-//        registry.addInterceptor(new AuthorizationInterceptor()).excludePathPatterns("/auth");
+        registry.addInterceptor(new AuthenticationInterceptor()).excludePathPatterns("/auth", "/error", "sing-out");
+        registry.addInterceptor(new AuthorizationInterceptor(menuRepo, menuActionRepo)).excludePathPatterns("/auth", "/error", "/sing-out");
         registry.addInterceptor(new ResponseStatusInterceptor());
     }
 
@@ -123,6 +134,13 @@ public class WebConfig extends WebMvcConfigurationSupport {
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(new PageableHandlerMethodArgumentResolver());
         argumentResolvers.add(new UserPrincipalArgumentResolver());
+    }
+
+    @Bean
+    public FilterRegistrationBean httpPutFormContentFilter() {
+        FilterRegistrationBean<HttpPutFormContentFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new HttpPutFormContentFilter());
+        return registrationBean;
     }
 }
 

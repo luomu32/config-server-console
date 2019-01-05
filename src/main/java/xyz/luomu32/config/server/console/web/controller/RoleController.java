@@ -5,7 +5,11 @@ import org.springframework.data.domain.Example;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import xyz.luomu32.config.server.console.entity.Role;
-import xyz.luomu32.config.server.console.pojo.RolePojo;
+import xyz.luomu32.config.server.console.repo.MenuRepo;
+import xyz.luomu32.config.server.console.web.exception.ServiceException;
+import xyz.luomu32.config.server.console.web.exception.ServiceExceptionEnum;
+import xyz.luomu32.config.server.console.web.request.MenusAndActions;
+import xyz.luomu32.config.server.console.web.request.RolePojo;
 import xyz.luomu32.config.server.console.repo.RoleRepo;
 import xyz.luomu32.config.server.console.service.RoleService;
 
@@ -30,6 +34,15 @@ public class RoleController {
         return roleRepo.findAll(Example.of(query));
     }
 
+    @PostMapping
+    public void create(@Validated @RequestBody RolePojo role) {
+        Role r = new Role();
+        r.setName(role.getName());
+        r.setCreatedDatetime(LocalDateTime.now());
+        r.setLastModifyDatetime(r.getCreatedDatetime());
+        roleRepo.save(r);
+    }
+
     @GetMapping("{id}")
     public Role getRoleById(@PathVariable Long id) {
         return roleRepo.findById(id).orElse(null);
@@ -40,26 +53,18 @@ public class RoleController {
         roleService.delete(id);
     }
 
-    @PutMapping
-    public void update(@Validated @RequestBody RolePojo role) {
-        Role r = new Role();
-        r.setId(role.getId());
-        r.setName(role.getName());
-        r.setLastModifyDatetime(LocalDateTime.now());
-        roleRepo.save(r);
+    @PutMapping("{id}")
+    public void update(@PathVariable Long id,
+                       @Validated @RequestBody RolePojo roleReq) {
+        Role role = roleRepo.findById(id).orElseThrow(() -> new ServiceException(ServiceExceptionEnum.ROLE_NOT_FOUND));
+
+        role.setName(roleReq.getName());
+        role.setLastModifyDatetime(LocalDateTime.now());
+        roleRepo.save(role);
     }
 
-    @PostMapping
-    public void create(@Validated @RequestBody RolePojo role) {
-        Role r = new Role();
-        r.setName(role.getName());
-        r.setCreatedDatetime(LocalDateTime.now());
-        r.setLastModifyDatetime(r.getCreatedDatetime());
-        roleRepo.save(r);
-    }
-
-    @GetMapping("menus")
-    public List<String> menus() {
-        return Stream.of("application", "config", "log").collect(Collectors.toList());
+    @GetMapping("{id}/menus")
+    public MenusAndActions menus(@PathVariable Long id) {
+        return roleService.menuWithActions(id);
     }
 }
