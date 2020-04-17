@@ -7,7 +7,6 @@ import javax.validation.constraints.NotNull;
 
 @Data
 public class UserPojo {
-    private Long id;
 
     @NotNull(groups = {CreateValid.class},
             message = "{user.role.id.not.null}")

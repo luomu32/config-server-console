@@ -1,12 +1,11 @@
 package xyz.luomu32.config.server.console.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Set;
 
 @Data
 @Entity
@@ -17,6 +16,9 @@ public class Menu implements Serializable {
     @GeneratedValue
     private Long id;
 
+    @Column(name = "father_id")
+    private Long fatherId;
+
     private String name;
 
     private String title;
@@ -25,5 +27,11 @@ public class Menu implements Serializable {
 
     private String url;
 
+    @JsonIgnore
     private String serverUrl;
+
+    //TODO N+1问题
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name = "father_id")
+    private Set<Menu> children;
 }

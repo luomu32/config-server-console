@@ -4,9 +4,14 @@ import lombok.Getter;
 
 public enum ServiceExceptionEnum {
 
+    SYSTEM_ERROR("error"),
+
+    PROFILE_EXISTED("profile.existed"),
+
     CONFIG_SERVER_NOT_FOUND("1002", "config.server.not.found"),
     CONFIG_EXISTED("1003", "config.existed"),
     CONFIG_NOT_EXISTED("1004", "config.not.existed"),
+    CONFIG_NOT_EMPTY("config.not.empty"),
 
 
     USER_PASSWORD_NOT_MATCH("user.password.not.match"),

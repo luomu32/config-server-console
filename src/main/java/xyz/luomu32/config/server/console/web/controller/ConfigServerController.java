@@ -1,6 +1,7 @@
 package xyz.luomu32.config.server.console.web.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
@@ -37,7 +38,7 @@ public class ConfigServerController {
     }
 
     @PutMapping
-    public void update(@RequestBody Server server) {
+    public void update(@RequestBody @Validated Server server) {
         ConfigServer configServer = new ConfigServer();
         configServer.setId(server.getId());
         configServer.setName(server.getName());
@@ -92,7 +93,7 @@ public class ConfigServerController {
         });
         return applications;
     }
-    
+
 
     @GetMapping("{id}")
     public ConfigServer getOne(@PathVariable Long id) {

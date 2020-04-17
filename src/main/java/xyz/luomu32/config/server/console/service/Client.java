@@ -11,7 +11,7 @@ public interface Client {
 
     ConfigServerType getType();
 
-    void add(ConfigServer server, String application, String profile, String key, String value);
+    boolean add(ConfigServer server, String application, String profile, String key, String value);
 
     void update(ConfigServer server, String application, Optional<String> profile, String key, String newValue);
 
@@ -30,4 +30,6 @@ public interface Client {
     void addApplication(ConfigServer server, String application, String profile);
 
     void deleteApplication(ConfigServer server, String application, String profile);
+
+    void addProfile(ConfigServer server, String application, String profile);
 }

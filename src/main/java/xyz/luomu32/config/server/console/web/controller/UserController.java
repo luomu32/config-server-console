@@ -10,6 +10,7 @@ import xyz.luomu32.config.server.console.entity.DeleteFlagEnum;
 import xyz.luomu32.config.server.console.entity.Role;
 import xyz.luomu32.config.server.console.entity.User;
 import xyz.luomu32.config.server.console.entity.UserApplication;
+import xyz.luomu32.config.server.console.repo.RoleRepo;
 import xyz.luomu32.config.server.console.web.request.UserPojo;
 import xyz.luomu32.config.server.console.web.request.UserPrincipal;
 import xyz.luomu32.config.server.console.repo.UserApplicationRepo;
@@ -19,6 +20,7 @@ import xyz.luomu32.config.server.console.web.exception.ServiceException;
 import xyz.luomu32.config.server.console.web.exception.ServiceExceptionEnum;
 
 import javax.swing.text.html.Option;
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -66,10 +68,10 @@ public class UserController {
     }
 
     @PostMapping
-    public void create(@Validated(UserPojo.CreateValid.class) @RequestBody UserPojo userPojo) {
+    public void create(@Validated(UserPojo.CreateValid.class) UserPojo userPojo) {
 
         userRepo.findByUsernameAndDeleted(userPojo.getName(), DeleteFlagEnum.UN_DELETED).ifPresent(u -> {
-                    throw new ServiceException(ServiceExceptionEnum.CONFIG_SERVER_NOT_FOUND);
+                    throw new ServiceException(ServiceExceptionEnum.USER_EXISTED);
                 }
         );
 
@@ -82,6 +84,22 @@ public class UserController {
         user.setCreatedDatetime(LocalDateTime.now());
         user.setLastModifyDatetime(user.getCreatedDatetime());
         userRepo.save(user);
+    }
+
+
+    @PutMapping("{id}")
+    public void update(@PathVariable Long id, @RequestParam Long roleId) {
+        userService.update(id, roleId);
+    }
+
+    @PutMapping("{id}/reset-password")
+    public void resetPassword(@PathVariable Long id, @RequestParam String password) {
+        userService.resetPassword(id, password);
+    }
+
+    @PutMapping("{id}/change-password")
+    public void changePassword(@PathVariable Long id, @RequestParam String oldPassword, @RequestParam String newPassword) {
+        userService.changePassword(id, oldPassword, newPassword);
     }
 
     /**

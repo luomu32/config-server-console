@@ -48,7 +48,7 @@ public class DefaultExceptionHandler {
     @ExceptionHandler
     public ApiErrorResponse methodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
         String message = messageSource.getMessage("parameter.invalid",
-                new Object[]{e.getValue(), e.getRequiredType().getName()},
+                new Object[]{e.getName(), e.getValue(), e.getRequiredType().getSimpleName()},
                 LocaleContextHolder.getLocale());
         return new ApiErrorResponse(message);
     }
@@ -68,6 +68,11 @@ public class DefaultExceptionHandler {
 
     @ExceptionHandler
     public ApiErrorResponse serviceExceptionHandle(ServiceException e) {
+
+        if (e.getTargetException() != null) {
+            LOGGER.error("", e.getTargetException());
+        }
+
         String message = messageSource.getMessage(e.getMessage(), e.getParams(), LocaleContextHolder.getLocale());
         return new ApiErrorResponse(e.getCode(), message);
     }

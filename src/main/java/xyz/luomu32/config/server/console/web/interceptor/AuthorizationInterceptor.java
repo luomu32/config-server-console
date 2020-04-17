@@ -3,8 +3,11 @@ package xyz.luomu32.config.server.console.web.interceptor;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
+import xyz.luomu32.config.server.console.entity.Menu;
+import xyz.luomu32.config.server.console.entity.MenuAction;
 import xyz.luomu32.config.server.console.entity.PermissionHttpMethod;
 import xyz.luomu32.config.server.console.repo.MenuActionRepo;
 import xyz.luomu32.config.server.console.repo.MenuRepo;
@@ -13,7 +16,7 @@ import xyz.luomu32.config.server.console.web.request.UserPrincipal;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -41,30 +44,30 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
         }
         String pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE).toString();
 
-        List<UrlAndMethod> accessControlResources = menuRepo.findAll()
-                .stream()
-                .filter(menu -> menu.getServerUrl() != null)
-                .map(menu -> new UrlAndMethod(menu.getServerUrl(), "GET")).collect(Collectors.toList());
-        
-        accessControlResources.addAll(menuActionRepo.findAll()
+        Set<UrlAndMethod> protectedResources = new HashSet<>();
+        loadProtectedUrlFromMenu(protectedResources, menuRepo.findByFatherIdIsNull()
+                .stream().collect(Collectors.toSet()));
+
+        protectedResources.addAll(menuActionRepo.findAll()
                 .stream()
                 .map(action ->
                         new UrlAndMethod(action.getUrl(), action.getHttpMethod().name())
                 )
-                .collect(Collectors.toList()));
+                .collect(Collectors.toSet()));
 
-        if (!accessControlResources.contains(new UrlAndMethod(pattern, request.getMethod().toUpperCase()))) {
-            //this resource do not need access control
+        //check resource is need to protect
+        if (!protectedResources.contains(new UrlAndMethod(pattern, request.getMethod().toUpperCase()))) {
             return true;
         }
 
+        Set<UrlAndMethod> menuUrls = new HashSet<>();
+        loadProtectedUrlFromMenu(menuUrls, user.getPermission().getMenus()
+                .stream().collect(Collectors.toSet()));
 
-        if (user.getMenus().stream().filter(m ->
-                pattern.equalsIgnoreCase(m.getServerUrl())
-        ).count() != 0)
+        if (menuUrls.stream().filter(m -> m.getUrl().equalsIgnoreCase(pattern)).count() != 0)
             return true;
 
-        if (user.getActions().stream().filter(a -> {
+        if (user.getPermission().getActions().stream().filter(a -> {
             if (!a.getUrl().equalsIgnoreCase(pattern))
                 return false;
             if (a.getHttpMethod() == PermissionHttpMethod.ALL)
@@ -75,6 +78,23 @@ public class AuthorizationInterceptor extends HandlerInterceptorAdapter {
         }
 
         return true;
+    }
+
+    private void loadProtectedUrlFromMenu(Set<UrlAndMethod> urls, Set<Menu> menus) {
+
+        for (Menu menu : menus) {
+            if (null == menu)
+                continue;
+
+            if (menu.getChildren().isEmpty()) {
+                if (StringUtils.isEmpty(menu.getServerUrl()))
+                    continue;
+
+                urls.add(new UrlAndMethod(menu.getServerUrl(), "GET"));
+            } else {
+                loadProtectedUrlFromMenu(urls, menu.getChildren());
+            }
+        }
     }
 
     @Data

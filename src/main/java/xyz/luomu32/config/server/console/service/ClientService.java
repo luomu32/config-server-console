@@ -41,8 +41,12 @@ public class ClientService implements Client, ApplicationContextAware {
     }
 
     @Override
-    public void add(ConfigServer server, String application, String profile, String key, String value) {
-        Optional.ofNullable(this.clientMaps.get(server.getType())).ifPresent(client -> client.add(server, application, profile, key, value));
+    public boolean add(ConfigServer server, String application, String profile, String key, String value) {
+        Client client = this.clientMaps.get(server.getType());
+        if (null == client)
+            return false;
+
+        return client.add(server, application, profile, key, value);
     }
 
     @Override
@@ -86,6 +90,15 @@ public class ClientService implements Client, ApplicationContextAware {
                     c.addApplication(server, application, profile);
                 }
         );
+    }
+
+    @Override
+    public void addProfile(ConfigServer server, String application, String profile) {
+        Client client = this.clientMaps.get(server.getType());
+        if (null == client)
+            return;
+
+        client.addProfile(server, application, profile);
     }
 
     @Override

@@ -3,6 +3,7 @@ package xyz.luomu32.config.server.console.web.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
+import xyz.luomu32.config.server.console.service.ConfigService;
 import xyz.luomu32.config.server.console.web.request.Application;
 import xyz.luomu32.config.server.console.web.request.UserPrincipal;
 import xyz.luomu32.config.server.console.repo.UserApplicationRepo;
@@ -28,6 +29,8 @@ public class ApplicationController {
     @Autowired
     private ClientService clientService;
 
+    @Autowired
+    private ConfigService configService;
 
 
     @GetMapping
@@ -97,26 +100,30 @@ public class ApplicationController {
 
     @DeleteMapping("{application}")
     public void delete(@PathVariable String application, UserPrincipal currentUser) {
+        configService.deleteApplication(application, null, currentUser);
+    }
+
+    @PostMapping("{application}/profile")
+    public void createProfile(@PathVariable String application,
+                              @RequestParam("name") String profileName) {
         ConfigServer server = configServerService.get();
         if (null == server) {
             throw new ServiceException(ServiceExceptionEnum.CONFIG_SERVER_NOT_FOUND);
         }
-        clientService.deleteApplication(server, application, null);
-        userApplicationRepo.deleteByUserIdAndApplication(currentUser.getId(), application);
+
+        clientService.addProfile(server, application, profileName);
     }
 
-//    @Deprecated
-//    @GetMapping("{id}/{application}/profiles")
-//    public Set<String> getProfiles(@PathVariable Long id, @PathVariable String application) {
-//        Optional<ConfigServer> configServer = configServerRepo.findById(id);
-//        if (!configServer.isPresent())
-//            return Collections.emptySet();
-//
-//        Set<String> profiles = new HashSet<>();
-//        clientService.getApplicationsWithProfile(configServer.get()).stream().filter(a -> a.startsWith(application)).forEach(a -> {
-//            if (a.indexOf(",") > 0)
-//                profiles.add(a.substring(a.indexOf(",") + 1, a.length()));
-//        });
-//        return profiles;
-//    }
+    @DeleteMapping("{application}/profile/{profile}")
+    public void deleteProfile(@PathVariable String application,
+                              @PathVariable String profile) {
+
+        ConfigServer server = configServerService.get();
+        if (null == server) {
+            throw new ServiceException(ServiceExceptionEnum.CONFIG_SERVER_NOT_FOUND);
+        }
+
+        clientService.deleteApplication(server, application, profile);
+    }
+
 }

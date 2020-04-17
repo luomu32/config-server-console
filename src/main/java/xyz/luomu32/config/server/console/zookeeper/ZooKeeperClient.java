@@ -8,12 +8,16 @@ import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
 import xyz.luomu32.config.server.console.entity.ConfigServerType;
 import xyz.luomu32.config.server.console.service.Client;
+import xyz.luomu32.config.server.console.service.ConfigService;
 import xyz.luomu32.config.server.console.web.exception.ServiceException;
 import xyz.luomu32.config.server.console.web.exception.ServiceExceptionEnum;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -60,18 +64,18 @@ public class ZooKeeperClient implements Client {
     }
 
     @Override
-    public void add(ConfigServer server, String application, String profile, String key, String value) {
+    public boolean add(ConfigServer server, String application, String profile, String key, String value) {
         CuratorFramework client = this.getClient(server);
         String path;
-        if (null != profile)
+        if (!StringUtils.isEmpty(profile))
             path = application + "," + profile;
         else
             path = application;
         try {
-
             client.create().forPath("/" + path + "/" + key, value.getBytes("utf-8"));
+            return true;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return false;
         }
     }
 
@@ -99,8 +103,12 @@ public class ZooKeeperClient implements Client {
             path = application + "," + profile;
         try {
             client.delete().forPath("/" + path + "/" + key);
+        } catch (KeeperException e) {
+            if (e.code() == KeeperException.Code.NONODE) {
+                throw new ServiceException(ServiceExceptionEnum.CONFIG_NOT_EXISTED);
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("error");
         }
     }
 
@@ -185,7 +193,7 @@ public class ZooKeeperClient implements Client {
     public void addApplication(ConfigServer server, String application, String profile) {
         CuratorFramework client = this.getClient(server);
         String path;
-        if (profile == null)
+        if (StringUtils.isEmpty(profile))
             path = application;
         else
             path = application + "," + profile;
@@ -196,6 +204,19 @@ public class ZooKeeperClient implements Client {
                 throw new ServiceException(ServiceExceptionEnum.CONFIG_EXISTED);
             }
             e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void addProfile(ConfigServer server, String application, String profile) {
+        CuratorFramework client = this.getClient(server);
+        try {
+            client.create().forPath("/" + application + "," + profile);
+        } catch (KeeperException e) {
+            if (e.code() == KeeperException.Code.NODEEXISTS)
+                throw new ServiceException(ServiceExceptionEnum.PROFILE_EXISTED);
+        } catch (Exception e) {
+            throw new ServiceException(ServiceExceptionEnum.SYSTEM_ERROR, e);
         }
     }
 
@@ -217,13 +238,15 @@ public class ZooKeeperClient implements Client {
     @Override
     public void deleteApplication(ConfigServer server, String application, String profile) {
         CuratorFramework client = this.getClient(server);
-        if (profile == null) {
+        if (profile == null) { //delete all profile under application
             try {
                 client.getChildren().forPath("/").stream().filter(c -> c.startsWith(application)).forEach(c -> {
                     this.delete("/" + c, client);
                 });
+            } catch (ServiceException e) {
+                throw e;
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new ServiceException(ServiceExceptionEnum.SYSTEM_ERROR, e);
             }
         } else
             this.delete("/" + application + "," + profile, client);
@@ -233,11 +256,14 @@ public class ZooKeeperClient implements Client {
     private void delete(String path, CuratorFramework client) {
         try {
             client.delete().forPath(path);
-        } catch (Exception e) {
-            if (e instanceof KeeperException.NoNodeException) {
+        } catch (KeeperException e) {
+            if (e.code() == KeeperException.Code.NONODE) {
                 throw new ServiceException(ServiceExceptionEnum.CONFIG_NOT_EXISTED);
+            } else if (e.code() == KeeperException.Code.NOTEMPTY) {
+                throw new ServiceException(ServiceExceptionEnum.CONFIG_NOT_EMPTY);
             }
-            e.printStackTrace();
+        } catch (Exception e) {
+            throw new ServiceException(ServiceExceptionEnum.SYSTEM_ERROR, e);
         }
     }
 

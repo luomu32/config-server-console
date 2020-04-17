@@ -10,12 +10,15 @@ import org.springframework.web.servlet.ModelAndView;
 import xyz.luomu32.config.server.console.entity.ConfigServer;
 import xyz.luomu32.config.server.console.entity.Log;
 import xyz.luomu32.config.server.console.entity.LogChangeType;
+import xyz.luomu32.config.server.console.web.exception.ServiceException;
+import xyz.luomu32.config.server.console.web.exception.ServiceExceptionEnum;
 import xyz.luomu32.config.server.console.web.request.Config;
 import xyz.luomu32.config.server.console.web.request.UserPrincipal;
 import xyz.luomu32.config.server.console.repo.ConfigServerRepo;
 import xyz.luomu32.config.server.console.repo.LogRepo;
 import xyz.luomu32.config.server.console.service.ClientService;
 import xyz.luomu32.config.server.console.service.ConfigServerService;
+import xyz.luomu32.config.server.console.web.response.BatchResponse;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -63,22 +66,22 @@ public class ConfigController {
         return clientService.findValue(configServer, application, profile, key);
     }
 
-    //put form类型的好像不行
-    @PutMapping
+    @PutMapping("{key:.+}")
     public void update(@PathVariable String application,
-                       @RequestBody Config config, UserPrincipal currentUser) {
+                       @PathVariable String key,
+                       Config config, UserPrincipal currentUser) {
         ConfigServer configServer = configServerService.get();
         if (null == configServer)
             return;
 
-        String oldValue = clientService.findValue(configServer, application, config.getProfile(), config.getKey());
+        String oldValue = clientService.findValue(configServer, application, config.getProfile(), key);
         if (oldValue.equals(config.getValue()))
             return;
-        clientService.update(configServer, application, Optional.ofNullable(config.getProfile()), config.getKey(), config.getValue());
+        clientService.update(configServer, application, Optional.ofNullable(config.getProfile()), key, config.getValue());
         Log log = new Log();
         log.setApplication(application);
         log.setProfile(config.getProfile());
-        log.setConfigKey(config.getKey());
+        log.setConfigKey(key);
         log.setChangeType(LogChangeType.UPDATE_CONFIG);
         log.setContent("修改前：" + oldValue + "。修改后：" + config.getValue());
         log.setCreatedDatetime(LocalDateTime.now());
@@ -97,24 +100,27 @@ public class ConfigController {
         ConfigServer configServer = configServerService.get();
 //                .orElseThrow(() -> new RuntimeException("config.server.not.found"));
 
-        clientService.add(configServer, application, profile, key, value);
+        boolean result = clientService.add(configServer, application, profile, key, value);
 
-        Log log = new Log();
-        log.setApplication(application);
-        log.setProfile(profile);
-        log.setConfigKey(key);
-        log.setChangeType(LogChangeType.ADD_CONFIG);
-        log.setContent(value);
-        log.setCreatedDatetime(LocalDateTime.now());
-        log.setOperatorId(currentUser.getId());
-        log.setOperatorName(currentUser.getUsername());
-        logRepo.save(log);
+        if (result) {
+            Log log = new Log();
+            log.setApplication(application);
+            log.setProfile(profile);
+            log.setConfigKey(key);
+            log.setChangeType(LogChangeType.ADD_CONFIG);
+            log.setContent(value);
+            log.setCreatedDatetime(LocalDateTime.now());
+            log.setOperatorId(currentUser.getId());
+            log.setOperatorName(currentUser.getUsername());
+            logRepo.save(log);
+        }
     }
 
-    @DeleteMapping
+    @DeleteMapping("{key:.+}")
     public void delete(@PathVariable String application,
-                       @RequestParam String key,
-                       @RequestParam(required = false) String profile, UserPrincipal currentUser) {
+                       @PathVariable String key,
+                       @RequestParam(required = false) String profile,
+                       UserPrincipal currentUser) {
         ConfigServer configServer = configServerService.get();
         if (null == configServer)
             return;
@@ -149,9 +155,9 @@ public class ConfigController {
     }
 
     @PostMapping("import")
-    public void importing(@PathVariable String application,
-                          @RequestParam(required = false) String profile,
-                          @RequestPart("file") MultipartFile file) {
+    public BatchResponse importing(@PathVariable String application,
+                                   @RequestParam(required = false) String profile,
+                                   @RequestPart("file") MultipartFile file) {
 
         String filename = file.getOriginalFilename();
         int pos = filename.lastIndexOf(".");
@@ -159,16 +165,22 @@ public class ConfigController {
 
         ConfigServer configServer = configServerService.get();
         if (null == configServer)
-            return;
+            throw new ServiceException(ServiceExceptionEnum.CONFIG_SERVER_NOT_FOUND);
 
+
+        long successCount = 0, failedCount = 0;
 
         if (ext.equalsIgnoreCase("properties")) {
             Properties properties = new Properties();
             try {
                 properties.load(file.getInputStream());
-                properties.stringPropertyNames().forEach(k -> {
-                    clientService.add(configServer, application, profile, k, properties.getProperty(k));
-                });
+
+                for (String k : properties.stringPropertyNames()) {
+                    if (clientService.add(configServer, application, profile, k, properties.getProperty(k)))
+                        successCount++;
+                    else failedCount++;
+                }
+
             } catch (IOException e) {
 
             }
@@ -177,9 +189,12 @@ public class ConfigController {
                 YamlPropertiesFactoryBean factoryBean = new YamlPropertiesFactoryBean();
                 factoryBean.setResources(new InputStreamResource(file.getInputStream()));
                 Properties properties = factoryBean.getObject();
-                properties.forEach((k, v) ->
-                        clientService.add(configServer, application, profile, k.toString(), v.toString()));
+                for (String k : properties.stringPropertyNames()) {
 
+                    if (clientService.add(configServer, application, profile, k, properties.getProperty(k)))
+                        successCount++;
+                    else failedCount++;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -187,6 +202,6 @@ public class ConfigController {
             throw new RuntimeException("upload.file.type.not.support");
         }
 
-
+        return new BatchResponse(successCount, failedCount);
     }
 }

@@ -1,5 +1,6 @@
 package xyz.luomu32.config.server.console.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -23,5 +24,6 @@ public class MenuAction implements Serializable {
     private String url;
 
     @Enumerated(value = EnumType.STRING)
+    @JsonIgnore
     private PermissionHttpMethod httpMethod;
 }

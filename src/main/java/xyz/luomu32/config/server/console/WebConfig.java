@@ -125,7 +125,7 @@ public class WebConfig extends WebMvcConfigurationSupport {
 
     @Override
     protected void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new AuthenticationInterceptor()).excludePathPatterns("/auth", "/error", "sing-out");
+        registry.addInterceptor(new AuthenticationInterceptor()).excludePathPatterns("/auth", "/error", "/sing-out");
         registry.addInterceptor(new AuthorizationInterceptor(menuRepo, menuActionRepo)).excludePathPatterns("/auth", "/error", "/sing-out");
         registry.addInterceptor(new ResponseStatusInterceptor());
     }
